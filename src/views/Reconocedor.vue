@@ -1,5 +1,6 @@
 <template>
-  <div class="my-1 mb-3 mx-auto text-center justify-content-center">
+  <div class="my-1 mb-3 mx-auto text-center justify-content-center bg-light px-4 py-3" :class="{'rounded':!mobile}">
+    <h3 class="text-center py-2 mb-3 font-weight-bold">Reconocedor de palabras en autómatas</h3>
     <div class="input-group mb-3">
       <input type="text" class="form-control" placeholder="Palabra a analizar" v-model="input.text">
       <input type="text" class="form-control" placeholder="Resultado de Turing" v-if="input.turing" v-model="input.resultTuring">
@@ -7,6 +8,7 @@
         <button class="btn btn-success" @click="analize()">Analizar</button>
       </div>
     </div>
+    <input type="text" class="form-control" v-model="input.eRechazo" placeholder="Estado de rechazo">
     <div class="col text-light rounded text-center my-2 py-1" :class="{'bg-success':result=='Reconoce', 'bg-danger':result=='No reconoce'}">{{result}}</div>
     <table class="table-responsive text-center align-middle my-auto mx-auto justify-content-center mt-2">
       <tr>
@@ -37,61 +39,65 @@
         </th>
       </tr>
     </table>
-    <div class="row col-12 mx-auto text-center my-3">
-      <button class="btn col-lg col-12 btn-success m-2" @click="addState">+1 Estado</button>
-      <button class="btn col-lg col-12 btn-success m-2" @click="addTransition">+1 Transición</button>
+    <div class="row col-12 mx-auto text-center my-3 text-center">
+      <button class="btn col-lg col-12 btn-success my-2 mx-auto m-md-2" @click="addState">+1 Estado</button>
+      <button class="btn col-lg col-12 btn-success my-2 mx-auto m-md-2" @click="addTransition">+1 Transición</button>
     </div>
-    <div class="col-12">
+    <div class="col-12 my-2">
       <div class="custom-control custom-switch">
         <input type="checkbox" class="custom-control-input" id="pila" v-model="input.pila" @click="input.turing=false">
         <label class="custom-control-label" for="pila">Agregar pila</label>
       </div>  
     </div>
-    <div class="col-12">
+    <div class="col-12 my-2">
       <div class="custom-control custom-switch">
         <input type="checkbox" class="custom-control-input" id="turing" v-model="input.turing" @click="input.pila=false">
         <label class="custom-control-label" for="turing">Máquina de Turing</label>
       </div>  
     </div>
-    <div class="container my-2">
-      <button class="btn btn-outline-dark rounded-pill" @click="showInstructions = !showInstructions">
-        <template v-if="showInstructions">
-          Ocultar instrucciones
-        </template>
-        <template v-else>
-          Mostrar instrucciones
-        </template>
+    <div class="container my-2 text-center mx-auto">
+      <button class="btn btn-warning rounded-pill d-block mx-auto my-2 font-weight-bold px-4 py-2" @click="showAutomata = !showAutomata">
+        Mostrar autómata
       </button>
-      <div class="container my-2" v-if="showInstructions">
-        <p class="my-1">Las transiciones son editables, para que puedas realizar el automata que desees</p>
-        <p class="my-1"><i class="fas fa-flag-checkered border p-2 rounded"></i> Estado no terminal <i class="fas fa-flag-checkered border p-2 rounded"></i></p>
-        <p class="my-1"><i class="fas fa-flag-checkered border p-2 rounded bg-success text-light"></i> Estado terminal <i class="fas fa-flag-checkered border p-2 rounded bg-success text-light"></i></p>
-        <p class="my-1"><i class="fas fa-trash border p-2 rounded text-danger"></i> Eliminar estado/transición <i class="fas fa-trash border p-2 rounded text-danger bg-dark"></i></p>
-      </div>
-    </div>
-    <div class="container my-2">
-      <button class="btn btn-outline-dark rounded-pill" @click="showHistory = !showHistory">
-        <template v-if="showHistory">
-          Ocultar historial
-        </template>
-        <template v-else>
+      <button class="btn btn-secondary rounded-pill d-block mx-auto my-2 font-weight-bold px-4 py-2" @click="showHistory = true">
           Mostrar historial
-        </template>
       </button>
-      <div class="border border-dark rounded p-2 m-2" v-if="showHistory">
-        <div class="input-group mb-3">
-          <input type="text" class="form-control" v-model="input.tableName">
-          <div class="input-group-append">
-            <button class="btn btn-success" @click="addHistory()">Añadir</button>
-          </div>
+      <button class="btn btn-info rounded-pill d-block mx-auto my-2 font-weight-bold px-4 py-2" @click="showInstructions = true">
+        Mostrar instrucciones
+      </button>
+    </div>
+    <template v-if="table">
+      {{c()}}
+    </template>
+    <b-modal centered title="Instrucciones" hide-footer v-model="showInstructions">
+      <p class="my-1 text-center">Las transiciones son editables, para que puedas realizar el automata que desees</p>
+      <p class="my-1 text-center"><i class="fas fa-flag-checkered border p-2 rounded"></i> Estado no terminal <i class="fas fa-flag-checkered border p-2 rounded"></i></p>
+      <p class="my-1 text-center"><i class="fas fa-flag-checkered border p-2 rounded bg-success text-light"></i> Estado terminal <i class="fas fa-flag-checkered border p-2 rounded bg-success text-light"></i></p>
+      <p class="my-1 text-center"><i class="fas fa-trash border p-2 rounded text-danger"></i> Eliminar estado/transición <i class="fas fa-trash border p-2 rounded text-danger bg-dark"></i></p>
+    </b-modal>
+    <b-modal id="showAutomata" size="lg" centered title="Autómata" class="mx-auto" hide-footer v-model="showAutomata">
+      <template  v-if="states.length>0" >
+        <Automata :table="table" :states="states" :key="showAutomata" />
+        <div class="text-center row mx-auto">
+          <p class="my-1 mx-auto"><i class="fas fa-circle"></i> Estado terminal</p>
+          <p class="my-1 mx-auto"><i class="far fa-circle"></i> Estado no terminal</p>
         </div>
-        <div class="py-2" :class="{'border-bottom':index!=history.length-1}" v-for="(table,index) in history" :key="index">
-          <p class="my-0 d-inline-block align-middle mx-2">{{table.name}}</p>
-          <button class="btn btn-info d-inline-block mx-2" @click="tableHistoryShow = table" v-b-modal.showTable>Ver tabla</button>
-          <button class="btn btn-success" @click="setActual(table)">Cargar</button>
+      </template>
+      <p class="my-3 text-center" v-else>Ingrese una tabla de transiciones</p>
+    </b-modal>
+    <b-modal centered size="lg" title="Historial" hide-footer v-model="showHistory">
+      <div class="input-group mb-3">
+        <input type="text" class="form-control" v-model="input.tableName">
+        <div class="input-group-append">
+          <button class="btn btn-success" @click="addHistory()">Añadir</button>
         </div>
       </div>
-    </div>
+      <div class="py-2 mx-auto text-center" :class="{'border-bottom':index!=history.length-1}" v-for="(table,index) in history" :key="index">
+        <p class="my-0 d-inline-block align-middle mx-2">{{table.name}}</p>
+        <button class="btn btn-info d-inline-block mx-2" @click="tableHistoryShow = table" v-b-modal.showTable>Ver tabla y autómata</button>
+        <button class="btn btn-success" @click="setActual(table); showHistory=false">Cargar</button>
+      </div>
+    </b-modal>
     <b-modal id="showTable" centered :title="tableHistoryShow.name" v-if="tableHistoryShow">
       <table class="table-responsive text-center align-middle justify-content-center m-2 p-2" v-if="tableHistoryShow">
         <tr>
@@ -115,8 +121,9 @@
           </th>
         </tr>
       </table>
+      <Automata :table="tableHistoryShow.table" :states="tableHistoryShow.states" />
       <template v-slot:modal-footer>
-        <b-button size="sm" variant="success" @click="setActual(tableHistoryShow);$bvModal.hide('showTable')">
+        <b-button size="sm" variant="success" @click="setActual(tableHistoryShow);$bvModal.hide('showTable'); showHistory=false;">
           Cargar tabla
         </b-button>
       </template>
@@ -125,12 +132,14 @@
 </template>
 
 <script>
+import Automata from '@/components/Automata.vue'
 export default {
   name: 'Reconocedor',
+  components:{Automata},
   props: [],
   data(){
     var turing= {
-      table: [ [ { nextState: "S1", read: null, write: "X", move: 1 }, { nextState: null, read: null, write: null, move: null }, { nextState: null, read: null, write: null, move: null }, { nextState: null, read: null, write: null, move: null }, { nextState: "S6", read: null, write: "Y", move: 1 }, { nextState: null, read: null, write: null, move: null } ], [ { nextState: "S1", read: null, write: "a", move: 1 }, { nextState: "S2", read: null, write: "Y", move: 1 }, { nextState: null, read: null, write: null, move: null }, { nextState: null, read: null, write: null, move: null }, { nextState: "S4", read: null, write: "Y", move: 1 }, { nextState: null, read: null, write: null, move: null } ], [ { nextState: null, read: null, write: null, move: null }, { nextState: "S2", read: null, write: "b", move: 1 }, { nextState: "S3", read: null, write: "Z", move: -1 }, { nextState: null, read: null, write: null, move: null }, { nextState: null, read: null, write: null, move: null }, { nextState: "S5", read: null, write: "Z", move: 1 } ], [ { nextState: "S3", read: null, write: "a", move: -1 }, { nextState: "S3", read: null, write: "b", move: -1 }, { nextState: null, read: null, write: null, move: null }, { nextState: "S0", read: null, write: "X", move: 1 }, { nextState: "S3", read: null, write: "Y", move: -1 }, { nextState: "S3", read: null, write: "Z", move: -1 } ], [ { nextState: null, read: null, write: null, move: null }, { nextState: "S2", read: null, write: "Y", move: 1 }, { nextState: null, read: null, write: null, move: null }, { nextState: null, read: null, write: null, move: null }, { nextState: "S4", read: null, write: "Y", move: 1 }, { nextState: null, read: null, write: null, move: null } ], [ { nextState: null, read: null, write: null, move: null }, { nextState: null, read: null, write: null, move: null }, { nextState: "S3", read: null, write: "Z", move: -1 }, { nextState: null, read: null, write: null, move: null }, { nextState: null, read: null, write: null, move: null }, { nextState: "S5", read: null, write: "Z", move: 1 } ], [ { nextState: null, read: null, write: null, move: null }, { nextState: null, read: null, write: null, move: null }, { nextState: null, read: null, write: null, move: null }, { nextState: null, read: null, write: null, move: null }, { nextState: "S6", read: null, write: "Y", move: 1 }, { nextState: "S7", read: null, write: "Z", move: 1 } ], [ { nextState: null, read: null, write: null, move: null }, { nextState: null, read: null, write: null, move: null }, { nextState: null, read: null, write: null, move: null }, { nextState: null, read: null, write: null, move: null }, { nextState: null, read: null, write: null, move: null }, { nextState: "S7", read: null, write: "Z", move: 1 } ] ],
+      table: [ [ { "nextState": "S1", "read": null, "write": "X", "move": 1, "state": "S0", "transition": "a" }, { "nextState": null, "read": null, "write": null, "move": null, "state": "S0", "transition": "b" }, { "nextState": null, "read": null, "write": null, "move": null, "state": "S0", "transition": "c" }, { "nextState": null, "read": null, "write": null, "move": null, "state": "S0", "transition": "X" }, { "nextState": "S6", "read": null, "write": "Y", "move": 1, "state": "S0", "transition": "Y" }, { "nextState": null, "read": null, "write": null, "move": null, "state": "S0", "transition": "Z" } ], [ { "nextState": "S1", "read": null, "write": "a", "move": 1, "state": "S1", "transition": "a" }, { "nextState": "S2", "read": null, "write": "Y", "move": 1, "state": "S1", "transition": "b" }, { "nextState": null, "read": null, "write": null, "move": null, "state": "S1", "transition": "c" }, { "nextState": null, "read": null, "write": null, "move": null, "state": "S1", "transition": "X" }, { "nextState": "S4", "read": null, "write": "Y", "move": 1, "state": "S1", "transition": "Y" }, { "nextState": null, "read": null, "write": null, "move": null, "state": "S1", "transition": "Z" } ], [ { "nextState": null, "read": null, "write": null, "move": null, "state": "S2", "transition": "a" }, { "nextState": "S2", "read": null, "write": "b", "move": 1, "state": "S2", "transition": "b" }, { "nextState": "S3", "read": null, "write": "Z", "move": -1, "state": "S2", "transition": "c" }, { "nextState": null, "read": null, "write": null, "move": null, "state": "S2", "transition": "X" }, { "nextState": null, "read": null, "write": null, "move": null, "state": "S2", "transition": "Y" }, { "nextState": "S5", "read": null, "write": "Z", "move": 1, "state": "S2", "transition": "Z" } ], [ { "nextState": "S3", "read": null, "write": "a", "move": -1, "state": "S3", "transition": "a" }, { "nextState": "S3", "read": null, "write": "b", "move": -1, "state": "S3", "transition": "b" }, { "nextState": null, "read": null, "write": null, "move": null, "state": "S3", "transition": "c" }, { "nextState": "S0", "read": null, "write": "X", "move": 1, "state": "S3", "transition": "X" }, { "nextState": "S3", "read": null, "write": "Y", "move": -1, "state": "S3", "transition": "Y" }, { "nextState": "S3", "read": null, "write": "Z", "move": -1, "state": "S3", "transition": "Z" } ], [ { "nextState": null, "read": null, "write": null, "move": null, "state": "S4", "transition": "a" }, { "nextState": "S2", "read": null, "write": "Y", "move": 1, "state": "S4", "transition": "b" }, { "nextState": null, "read": null, "write": null, "move": null, "state": "S4", "transition": "c" }, { "nextState": null, "read": null, "write": null, "move": null, "state": "S4", "transition": "X" }, { "nextState": "S4", "read": null, "write": "Y", "move": 1, "state": "S4", "transition": "Y" }, { "nextState": null, "read": null, "write": null, "move": null, "state": "S4", "transition": "Z" } ], [ { "nextState": null, "read": null, "write": null, "move": null, "state": "S5", "transition": "a" }, { "nextState": null, "read": null, "write": null, "move": null, "state": "S5", "transition": "b" }, { "nextState": "S3", "read": null, "write": "Z", "move": -1, "state": "S5", "transition": "c" }, { "nextState": null, "read": null, "write": null, "move": null, "state": "S5", "transition": "X" }, { "nextState": null, "read": null, "write": null, "move": null, "state": "S5", "transition": "Y" }, { "nextState": "S5", "read": null, "write": "Z", "move": 1, "state": "S5", "transition": "Z" } ], [ { "nextState": null, "read": null, "write": null, "move": null, "state": "S6", "transition": "a" }, { "nextState": null, "read": null, "write": null, "move": null, "state": "S6", "transition": "b" }, { "nextState": null, "read": null, "write": null, "move": null, "state": "S6", "transition": "c" }, { "nextState": null, "read": null, "write": null, "move": null, "state": "S6", "transition": "X" }, { "nextState": "S6", "read": null, "write": "Y", "move": 1, "state": "S6", "transition": "Y" }, { "nextState": "S7", "read": null, "write": "Z", "move": 1, "state": "S6", "transition": "Z" } ], [ { "nextState": null, "read": null, "write": null, "move": null, "state": "S7", "transition": "a" }, { "nextState": null, "read": null, "write": null, "move": null, "state": "S7", "transition": "b" }, { "nextState": null, "read": null, "write": null, "move": null, "state": "S7", "transition": "c" }, { "nextState": null, "read": null, "write": null, "move": null, "state": "S7", "transition": "X" }, { "nextState": null, "read": null, "write": null, "move": null, "state": "S7", "transition": "Y" }, { "nextState": "S7", "read": null, "write": "Z", "move": 1, "state": "S7", "transition": "Z" } ] ],
       states: [{value:"S0",end:false} ,{value:"S1",end:false} ,{value:"S2",end:false} ,{value:"S3",end:false} ,{value:"S4",end:false} ,{value:"S5",end:false} ,{value:"S6",end:false} ,{value:"S7",end:true}],
       transitions:  [{value:"a"} ,{value:"b"} ,{value:"c"} ,{value:"X"} ,{value:"Y"} ,{value:"Z"}],
       turing:true,
@@ -145,7 +154,8 @@ export default {
         tableName: '',
         pila:false,
         turing: false,
-        resultTuring: ''
+        resultTuring: '',
+        eRechazo: ''
       },
       result:'',  
       table:[],
@@ -157,10 +167,40 @@ export default {
       history:[turing],
       showHistory:false,
       showInstructions:false,
+      showAutomata:false,
       tableHistoryShow: null,
+      mobile: window.innerWidth<576,
     }
   },
   methods:{
+    c(){
+      var tabla = this.table;
+      var temp = '{';
+      for(var i = 0; i<tabla.length; i++){
+        var tempRow = '';
+        let row = tabla[i];
+        for(var j = 0; j<row.length; j++){
+          let col = row[j];
+          tempRow += `{${(col.nextState?col.nextState:this.input.eRechazo).replace("S","")}}${j==(row.length-1)?"":","}`;
+        }
+        console.log(i==(tabla.length-1));
+        temp+= `{${tempRow}}${i==(tabla.length-1) ? "": "," }`;
+      }
+      temp += "}";
+      return temp;
+    },
+    adapt(val){
+      var states = val.states;
+      var transitions = val.transitions;
+      var temp = val.table;
+      for(var i = 0; i<temp.length; i++){
+        for(var j = 0; j< temp[i].length; j++){
+          temp[i][j]["state"] = states[i].value;
+          temp[i][j]["transition"] = transitions[j].value;
+        }
+      }
+      return temp;
+    },
     setActual(el){
       this.table = this.copyTable(el.table);
       this.states = this.copyTransitionStates(el.states);
@@ -179,7 +219,9 @@ export default {
             nextState: el2.nextState,
             read: el2.read,
             write: el2.write,
-            move: el2.move
+            move: el2.move,
+            state: el2.state,
+            transition: el2.transition
           }
           tempEl.push(tempEl2);
         });
@@ -241,33 +283,42 @@ export default {
       }
     },
     addTransition(){
+      var nextValue = this.nextLetter(this.transitions[this.transitions.length-1]);
       this.transitions.push({
-        value: this.nextLetter(this.transitions[this.transitions.length-1])
+        value: nextValue
       })
+      var cont = 0;
       this.table.forEach(e=>{
         e.push({
           nextState: null,
           read: null,
           write: null,
-          move: null
+          move: null,
+          transition: nextValue,
+          state: this.states[cont].value,
         })
+        cont++;
       })
       if(this.states.length==0){
         this.addState()
       }
     },
     addState(){
+      var nextState = "S" + (this.states.length>0?this.states.length:0);
       this.states.push({
-        value:"S" + (this.states.length>0?this.nextLetter({value:this.states[this.states.length-1].value.replace("S","")}):0),
+        value: nextState,
         end: false
       });
       var temp = [];
       for(var i = 0; i<this.transitions.length; i++){
+        let nextValue = this.transitions[i].value;
         temp.push({
           nextState:null,
           read: null,
           write: null,
-          move: null
+          move: null,
+          transition: nextValue,
+          state: nextState
         })
       }
       this.table.push(temp)

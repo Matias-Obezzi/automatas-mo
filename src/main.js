@@ -1,4 +1,5 @@
 import Vue from 'vue'
+import VuePwaInstallPlugin from "vue-pwa-install";
 import App from './App.vue'
 import './registerServiceWorker'
 import router from './router'
@@ -10,6 +11,8 @@ import { BootstrapVue, IconsPlugin } from 'bootstrap-vue'
 Vue.use(BootstrapVue)
 // Optionally install the BootstrapVue icon components plugin
 Vue.use(IconsPlugin)
+
+Vue.use(VuePwaInstallPlugin);
 
 Vue.config.productionTip = false
 

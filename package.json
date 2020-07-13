@@ -1,6 +1,6 @@
 {
   "name": "automatas",
-  "version": "0.1.0",
+  "version": "1.4.0",
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
@@ -11,14 +11,16 @@
     "bootstrap": "^4.5.0",
     "bootstrap-vue": "^2.15.0",
     "core-js": "^3.6.5",
+    "gogogojsvue": "^1.8.15",
     "i": "^0.3.6",
     "jquery": "^3.5.1",
     "npm": "^6.14.5",
     "popper.js": "^1.16.1",
     "register-service-worker": "^1.7.1",
     "vue": "^2.6.11",
-    "vue-router": "^3.2.0",
-    "xstate": "^4.10.0"
+    "vue-property-decorator": "^9.0.0",
+    "vue-pwa-install": "^1.1.0",
+    "vue-router": "^3.2.0"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "~4.4.0",
@@ -41,7 +43,11 @@
       "eslint:recommended"
     ],
     "parserOptions": {
-      "parser": "babel-eslint"
+      "parser": "babel-eslint",
+      "ecmaVersion": 2015,
+      "ecmaFeatures": {
+        "legacyDecorators": true
+      }
     },
     "rules": {}
   },
